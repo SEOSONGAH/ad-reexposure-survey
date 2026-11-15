@@ -180,7 +180,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   const SUBMIT_URL = "https://script.google.com/macros/s/AKfycby4ap8I0HRzTUL6oiK7qtLPgNKCUD8AxAwLltuE86LqSoFPLTTjUm3KOAuUq4N_8HAf/exec";
 
   // 집단별 제시 순서. 링크 끝에 ?g=1 ~ ?g=4 를 붙여 배포합니다 (아티팩트에서는 #g1 ~ #g4).
-  const GROUP_ORDERS = { 1: "ABCD", 2: "BCAD", 3: "CDBA", 4: "DACB" };
+  const GROUP_ORDERS = { 1: "ABCD", 2: "BDAC", 3: "DCBA", 4: "CADB" };
   const GROUP = (() => {
     let g = null;
     try { g = new URLSearchParams(location.search).get("g"); } catch {}
@@ -209,16 +209,16 @@ th { background: var(--bg); position: sticky; top: 0; }
     ["T1", "이 앱 서비스를 신뢰할 수 있다."],
     ["T2", "이 앱 서비스를 믿을 수 있다."],
     ["T3", "이 앱 서비스는 투명하다고 생각한다."],
-    ["AC1", "이러한 광고가 다시 나타나는 것은 적절하다."],
-    ["AC2", "이러한 광고가 다시 나타나는 것을 받아들일 수 있다."],
-    ["AC3", "이러한 광고가 다시 나타나는 것은 바람직하지 않다."]
+    ["AC1", "‘7일간 보지 않기’를 선택한 이후, 이러한 광고가 나타나는 것은 적절하다."],
+    ["AC2", "‘7일간 보지 않기’를 선택한 이후, 이러한 광고가 나타나는 것을 받아들일 수 있다."],
+    ["AC3", "‘7일간 보지 않기’를 선택한 이후, 이러한 광고가 나타나는 것은 바람직하지 않다."]
   ];
   // 참가자에게 보이는 메인 질문 (구성개념 이름은 노출하지 않음)
   const GROUPS = [
     ["V", "앞서 표시한 거부 의사(‘7일간 보지 않기’)가 이번 광고 노출에 어떻게 반영되었다고 느끼십니까?"],
     ["A", "이 상황에서 느낀 감정에 대해 응답해 주세요."],
     ["T", "이 앱 서비스에 대해 어떻게 생각하십니까?"],
-    ["AC", "이 광고가 다시 나타나는 것에 대해 어떻게 생각하십니까?"]
+    ["AC", "‘7일간 보지 않기’를 선택한 이후, 이 광고가 나타난 상황에 대해 어떻게 생각하십니까?"]
   ];
   const groupOf = k => k.replace(/\d+$/, "");
   const STEPS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "done"];
@@ -228,7 +228,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   const newState = () => ({
     id: "R" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
     startedAt: new Date().toISOString(),
-    info: { name: "", gender: "", age: "" },
+    info: { gender: "", age: "" },
     tapped: false, tappedAt: null, closed: false, closedAt: null,
     P: "",
     answers: { A: {}, B: {}, C: {}, D: {} },
@@ -251,7 +251,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   function flatten(r) {
     const row = {
       response_id: r.id, group: r.group ?? "", order: r.order, started_at: r.startedAt, submitted_at: r.submittedAt,
-      name: r.info.name, gender: r.info.gender, age: r.info.age,
+      gender: r.info.gender, age: r.info.age,
       tapped_7day: r.tapped ? 1 : 0, P_expect: r.P
     };
     for (const c of ["A", "B", "C", "D"]) {
@@ -307,21 +307,17 @@ th { background: var(--bg); position: sticky; top: 0; }
         <div class="intro">
           <p>안녕하세요.<br>저희는 홍익대학교 시각디자인과 대학원에 재학 중인 4인 팀으로, 모바일 앱 내 광고 관련 기능과 광고 재노출에 대한 사용자 인식을 알아보기 위한 연구를 진행하고 있습니다.</p>
           <dl class="facts">
-            <div><dt>설문 내용</dt><dd>모바일 앱에서 인앱 광고 관련 기능을 선택하는 상황과 이후 제시되는 네 가지 화면을 살펴보고, 각 화면에 대한 생각과 느낌에 응답</dd></div>
+            <div><dt>설문 내용</dt><dd>모바일 앱에서 광고 관련 기능을 선택하고, 이후 제시되는 네 가지 화면을 살펴본 뒤 각 상황에 대한 생각과 느낌에 응답</dd></div>
             <div><dt>설문 대상</dt><dd>모바일 앱 이용 경험이 있는 사용자</dd></div>
             <div><dt>소요 시간</dt><dd>약 10분 이내</dd></div>
-            <div><dt>설문 목적</dt><dd>앱 내 광고 관련 기능에 대한 사용자의 기대와 광고 재노출에 대한 인식을 파악하기 위한 연구</dd></div>
+            <div><dt>설문 목적</dt><dd>모바일 앱에서 광고 관련 기능을 이용하는 과정에서 나타나는 사용자의 인식과 경험을 파악하기 위한 연구</dd></div>
           </dl>
           <p>제시된 상황과 화면을 살펴본 뒤, 각 질문에 대해 자신의 생각과 가장 가까운 응답을 선택해 주세요. 정해진 정답은 없으며, 평소 생각과 느낀 점을 바탕으로 응답해 주시면 됩니다.</p>
-          <p>본 설문에서는 이름, 성별, 연령대 및 설문 응답을 수집합니다. 수집된 정보는 학술 연구와 통계 분석 목적으로만 사용되며, 연구 결과를 보고할 때 개인을 식별할 수 있는 정보는 공개하지 않습니다.</p>
+          <p>본 설문에서는 성별, 연령대 및 설문 응답을 수집합니다. 수집된 정보는 학술 연구와 통계 분석 목적으로만 사용되며, 연구 결과를 보고할 때 개인을 식별할 수 있는 정보는 공개하지 않습니다.</p>
           <p>설문 참여는 자발적으로 이루어지며, 참여를 원하지 않는 경우 언제든지 중단할 수 있습니다.</p>
           <p>바쁜 시간 내어 참여해 주셔서 진심으로 감사드립니다.</p>
         </div>
         <form class="panel stack" id="infoForm" novalidate style="margin-top:22px">
-          <div class="field">
-            <label for="f-name">이름</label>
-            <input type="text" id="f-name" autocomplete="off" value="${esc(S.info.name)}" placeholder="홍길동">
-          </div>
           <div class="field">
             <span class="flabel" id="g-label">성별</span>
             <div class="seg seg-2" role="radiogroup" aria-labelledby="g-label">
@@ -348,11 +344,9 @@ th { background: var(--bg); position: sticky; top: 0; }
     });
     document.getElementById("infoForm").onsubmit = e => {
       e.preventDefault();
-      S.info.name = document.getElementById("f-name").value.trim();
       const err = document.getElementById("infoErr");
       let msg = "";
-      if (!S.info.name) msg = "이름을 입력해 주세요.";
-      else if (!S.info.gender) msg = "성별을 선택해 주세요.";
+      if (!S.info.gender) msg = "성별을 선택해 주세요.";
       else if (!S.info.age) msg = "연령대를 선택해 주세요.";
       if (msg) { err.textContent = msg; err.hidden = false; return; }
       go(step + 1);
@@ -423,8 +417,8 @@ th { background: var(--bg); position: sticky; top: 0; }
             <h2 class="title">‘7일간 보지 않기’를 선택하고 ‘닫기’를 눌렀습니다. 아래 내용에 대해 응답해 주세요.</h2>
           </div>
           <div>
-            <p class="question">‘7일간 보지 않기’ 버튼을 누른 후, 이 기능이 어느 범위까지 적용되기를 기대하십니까?</p>
-            <p class="muted" style="margin-top:4px">본인이 원하는 적용 범위에 가장 가까운 하나를 선택해 주세요.</p>
+            <p class="question">‘7일간 보지 않기’를 선택할 때, 어떤 광고가 어떤 형태까지 보이지 않기를 기대하셨습니까?</p>
+            <p class="muted" style="margin-top:4px">기대한 범위에 가장 가까운 하나를 선택해 주세요.</p>
           </div>
           <div class="opts" role="radiogroup" aria-label="예상 차단 범위">
             ${P_OPTS.map(([v, t]) => `<button type="button" class="opt" role="radio" data-p="${v}" aria-checked="${S.P === v}"><span class="dot"></span><span>${t}</span></button>`).join("")}
