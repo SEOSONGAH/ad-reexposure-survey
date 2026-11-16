@@ -149,8 +149,13 @@ input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3
 .rank-card .phone { max-width: none; border-radius: 16px; box-shadow: none; transition: outline-color .15s; outline: 3px solid transparent; outline-offset: 3px; }
 .rank-card[aria-pressed="true"] .phone { outline-color: var(--accent); }
 .rank-badge { position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
-.rank-name { font-size: 15px; font-weight: 500; text-align: center; }
-.rank-name b { color: var(--accent); font-weight: 600; }
+.rank-name { font-size: 20px; font-weight: 600; color: var(--accent); text-align: center; line-height: 1.2; margin-top: 4px; }
+.rank-key { align-items: center; gap: 10px; }
+.rank-key span { white-space: nowrap; }
+.rank-key i { flex: 1; height: 1px; background: var(--muted); position: relative; min-width: 24px; }
+.rank-key i::before, .rank-key i::after { content: ""; position: absolute; top: -4px; width: 8px; height: 8px; border-top: 1px solid var(--muted); }
+.rank-key i::before { left: 0; border-left: 1px solid var(--muted); transform: rotate(-45deg); transform-origin: 0 0; top: 0; }
+.rank-key i::after { right: 0; border-right: 1px solid var(--muted); transform: rotate(45deg); transform-origin: 100% 0; top: 0; }
 .rank-zoom { background: transparent; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; }
 
 /* lightbox */
@@ -244,7 +249,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     tapped: false, tappedAt: null, closed: false, closedAt: null,
     P: "",
     answers: { A: {}, B: {}, C: {}, D: {} },
-    rank: [], // 기대와 거리가 먼 순서 (첫 번째 = 가장 멀었음)
+    rank: [], // 당시 기대와 가까운 순서 (첫 번째 = 가장 가까움, 마지막 = 가장 다름)
     times: {}
   });
   let S = newState();
@@ -522,27 +527,28 @@ th { background: var(--bg); position: sticky; top: 0; }
     };
   }
 
-  // 마지막 화면: 네 상황을 집단 제시 순서대로 보여 주고, 기대와 거리가 먼 순서대로 눌러 1~4 번호를 매김
+  // 마지막 화면: 네 상황을 집단 제시 순서대로 보여 주고, 당시 기대와 가까운 순서대로 눌러 1~4 번호를 매김
   function renderRank() {
     const rank = S.rank;
     app.innerHTML = `
       <div class="cond-head">
         <p class="eyebrow">마지막 질문</p>
-        <h2 class="title">봤던 상황 중 가장 기대했던 것과 거리가 멀었던 순서대로 나열해 주세요.</h2>
-        <p class="lead">기대와 가장 거리가 멀었던 화면부터 차례로 눌러 주세요. 누른 순서대로 1~4 번호가 붙고, 다시 누르면 취소됩니다.</p>
+        <h2 class="title">처음 ‘7일간 보지 않기’를 선택했을 때, 어떤 광고가 보이지 않기를 바랐는지 떠올려 주세요.</h2>
+        <p class="lead">아래 네 가지 상황을 당시 기대와 가장 가까운 상황부터 가장 다른 상황까지 순서대로 배열해 주세요.</p>
+        <p class="muted" style="margin-top:6px">가장 가까운 화면부터 차례로 누르면 1~4 번호가 붙습니다. 다시 누르면 취소됩니다.</p>
       </div>
       <div class="stack">
-        <div class="scale-key"><span>1 = 기대와 가장 거리가 멀었음</span><span>4 = 기대와 가장 가까웠음</span></div>
+        <div class="scale-key rank-key"><span>1 가장 가까운 상황</span><i aria-hidden="true"></i><span>4 가장 다른 상황</span></div>
         <div class="rank-grid">
           ${ORDER.map(c => {
             const n = rank.indexOf(c) + 1;
             return `
             <div class="rank-item">
-              <button type="button" class="rank-card" data-c="${c}" aria-pressed="${n > 0}" aria-label="${c}. ${COND[c]}${n ? ", " + n + "번째" : ""}">
+              <button type="button" class="rank-card" data-c="${c}" aria-pressed="${n > 0}" aria-label="상황 ${c}${n ? ", " + n + "번째" : ""}">
                 <div class="phone"><img src="${IMG[c]}" alt="" width="402" height="944"></div>
                 ${n ? `<span class="rank-badge" aria-hidden="true">${n}</span>` : ""}
               </button>
-              <p class="rank-name"><b>${c}.</b> ${COND[c]}</p>
+              <p class="rank-name">${c}</p>
               <button type="button" class="rank-zoom" data-z="${c}">크게 보기</button>
             </div>`;
           }).join("")}
@@ -561,7 +567,7 @@ th { background: var(--bg); position: sticky; top: 0; }
       renderRank();
       app.querySelector(`[data-c="${c}"]`).focus({ preventScroll: true });
     });
-    app.querySelectorAll("[data-z]").forEach(b => b.onclick = () => openLB(IMG[b.dataset.z], b.dataset.z + ". " + COND[b.dataset.z]));
+    app.querySelectorAll("[data-z]").forEach(b => b.onclick = () => openLB(IMG[b.dataset.z], "상황 " + b.dataset.z + " 화면"));
     document.getElementById("rBack").onclick = () => go(step - 1);
     const rs = document.getElementById("rReset");
     if (rs) rs.onclick = () => { rank.length = 0; renderRank(); };
