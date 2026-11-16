@@ -150,12 +150,12 @@ input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3
 .rank-card[aria-pressed="true"] .phone { outline-color: var(--accent); }
 .rank-badge { position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 .rank-name { font-size: 20px; font-weight: 600; color: var(--accent); text-align: center; line-height: 1.2; margin-top: 4px; }
-.rank-key { align-items: center; gap: 10px; }
-.rank-key span { white-space: nowrap; }
-.rank-key i { flex: 1; height: 1px; background: var(--muted); position: relative; min-width: 24px; }
-.rank-key i::before, .rank-key i::after { content: ""; position: absolute; top: -4px; width: 8px; height: 8px; border-top: 1px solid var(--muted); }
-.rank-key i::before { left: 0; border-left: 1px solid var(--muted); transform: rotate(-45deg); transform-origin: 0 0; top: 0; }
-.rank-key i::after { right: 0; border-right: 1px solid var(--muted); transform: rotate(45deg); transform-origin: 100% 0; top: 0; }
+.rank-scale { margin-top: 6px; font-weight: 600; font-size: 15px; }
+.rank-slots { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 41px); z-index: 10; background: var(--bg); display: flex; align-items: center; justify-content: center; gap: 8px; padding-block: 10px; margin-top: -12px; }
+.slot { width: 56px; height: 56px; border-radius: 10px; background: var(--line); color: var(--muted); display: grid; place-items: center; font-size: 15px; font-weight: 500; border: 0; padding: 0; }
+.slot.filled { background: var(--surface); border: 2px solid var(--accent); color: var(--accent); font-size: 24px; font-weight: 700; cursor: pointer; }
+.slot-arrow { color: var(--muted); font-size: 16px; }
+.rank-help { text-align: center; margin: 2px 0 14px; }
 .rank-zoom { background: transparent; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; }
 
 /* lightbox */
@@ -163,7 +163,9 @@ input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3
 .lightbox img { max-height: calc(100vh - 90px); max-width: 100%; width: auto; border-radius: 22px; }
 .lightbox .close { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: max(16px, env(safe-area-inset-top, 0px)); background: #fff; color: #111; border: 0; border-radius: 999px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
 .fab { position: fixed; z-index: 40; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25); cursor: pointer; }
-@media (min-width: 860px) { .fab { display: none; } }
+.fab { transition: opacity .2s, transform .2s; }
+.fab.fab-hide { opacity: 0; transform: translateY(12px); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .fab { transition: none; } }
 
 /* done / results */
 .code { font-family: var(--font-mono); font-size: 14px; background: var(--bg); border: 1px dashed var(--line); padding: 10px 12px; border-radius: 8px; word-break: break-all; }
@@ -205,16 +207,16 @@ th { background: var(--bg); position: sticky; top: 0; }
     return GROUP_ORDERS[g] ? Number(g) : 1;
   })();
   const ORDER = GROUP_ORDERS[GROUP].split("");
-  const IMG = { base: "base.jpg", home: "home.jpg", A: "A.jpg", B: "B.jpg", C: "C.jpg", D: "D.jpg" };
+  const IMG = { base: "base.jpg", home: "home.jpg", A: "A.jpg", B: "B.jpg", C: "C.jpg", D: "D.jpg?v=2" };
   const COND = {
     A: "동일 광고 · 팝업", B: "동일 광고 · 고정 배너",
     C: "다른 광고 · 팝업", D: "다른 광고 · 고정 배너"
   };
   const P_OPTS = [
-    ["P1", "해당 광고의 팝업만 차단"],
-    ["P2", "해당 광고의 모든 형태 차단"],
-    ["P3", "모든 팝업 광고 차단"],
-    ["P4", "모든 인앱 광고 차단"]
+    ["P1", "처음 본 광고가 팝업 형태로만 다시 나타나지 않는 것"],
+    ["P2", "처음 본 광고가 어떤 형태로도 다시 나타나지 않는 것"],
+    ["P3", "광고 내용과 관계없이 모든 팝업 광고가 나타나지 않는 것"],
+    ["P4", "광고 내용과 형태에 관계없이 모든 인앱 광고가 나타나지 않는 것"]
   ];
   const ITEMS = [
     ["V1", "이 광고 노출은 이전에 표시한 나의 거부 의사가 무시되었다고 느껴진다."],
@@ -501,10 +503,7 @@ th { background: var(--bg); position: sticky; top: 0; }
           </div>
         </div>
       </div>`;
-    const fab = document.createElement("button");
-    fab.className = "fab"; fab.type = "button"; fab.textContent = "화면 다시 보기";
-    fab.onclick = () => openLB(IMG[c], "상황 " + c + " 화면");
-    document.body.appendChild(fab);
+    addFab();
     document.getElementById("zoomBtn").onclick = () => openLB(IMG[c], "상황 " + c + " 화면");
 
     app.querySelectorAll(".likert button").forEach(b => b.onclick = () => {
@@ -527,6 +526,23 @@ th { background: var(--bg); position: sticky; top: 0; }
     };
   }
 
+  // ‘처음 화면 다시 보기’ 버튼: 처음 본 광고 팝업(기본 이미지)을 크게 보여 줌.
+  // 아래쪽 ‘다음/제출하기’ 버튼 줄이 화면에 들어오면 가리지 않도록 숨김
+  let fabObs = null;
+  function addFab() {
+    document.querySelector(".fab")?.remove();
+    if (fabObs) { fabObs.disconnect(); fabObs = null; }
+    const fab = document.createElement("button");
+    fab.className = "fab"; fab.type = "button"; fab.textContent = "처음 화면 다시 보기";
+    fab.onclick = () => openLB(IMG.base, "처음 본 광고 팝업 화면");
+    document.body.appendChild(fab);
+    const row = app.querySelector(".btn-row");
+    if (row && "IntersectionObserver" in window) {
+      fabObs = new IntersectionObserver(([e]) => fab.classList.toggle("fab-hide", e.isIntersecting));
+      fabObs.observe(row);
+    }
+  }
+
   // 마지막 화면: 네 상황을 집단 제시 순서대로 보여 주고, 당시 기대와 가까운 순서대로 눌러 1~4 번호를 매김
   function renderRank() {
     const rank = S.rank;
@@ -534,11 +550,19 @@ th { background: var(--bg); position: sticky; top: 0; }
       <div class="cond-head">
         <p class="eyebrow">마지막 질문</p>
         <h2 class="title">처음 ‘7일간 보지 않기’를 선택했을 때, 어떤 광고가 보이지 않기를 바랐는지 떠올려 주세요.</h2>
-        <p class="lead">아래 네 가지 상황을 당시 기대와 가장 가까운 상황부터 가장 다른 상황까지 순서대로 배열해 주세요.</p>
-        <p class="muted" style="margin-top:6px">가장 가까운 화면부터 차례로 누르면 1~4 번호가 붙습니다. 다시 누르면 취소됩니다.</p>
+        <p class="lead">아래 네 가지 상황을 당시 기대와 가장 가까운 상황부터 가장 다른 상황까지 순서대로 선택해 주세요.</p>
+        <p class="rank-scale">1. 가장 가까운 상황 ~ 4. 가장 다른 상황</p>
       </div>
+      <div class="rank-slots" aria-label="선택한 순서">
+        ${ORDER.map((_, i) => {
+          const c = rank[i];
+          return (i ? `<span class="slot-arrow" aria-hidden="true">→</span>` : "") +
+            (c ? `<button type="button" class="slot filled" data-s="${c}" aria-label="${i + 1}번째 ${c}, 눌러서 취소">${c}</button>`
+               : `<span class="slot" aria-label="${i + 1}번째 비어 있음">${i + 1}</span>`);
+        }).join("")}
+      </div>
+      <p class="muted rank-help">화면을 누르면 위 칸이 순서대로 채워집니다. 다시 누르면 취소됩니다.</p>
       <div class="stack">
-        <div class="scale-key rank-key"><span>1 가장 가까운 상황</span><i aria-hidden="true"></i><span>4 가장 다른 상황</span></div>
         <div class="rank-grid">
           ${ORDER.map(c => {
             const n = rank.indexOf(c) + 1;
@@ -560,13 +584,15 @@ th { background: var(--bg); position: sticky; top: 0; }
           <button class="btn" type="button" id="rNext" ${rank.length === ORDER.length ? "" : "disabled"}>제출하기</button>
         </div>
       </div>`;
-    app.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
-      const c = b.dataset.c;
+    const toggle = c => {
       const i = rank.indexOf(c);
       if (i >= 0) rank.splice(i, 1); else rank.push(c);
       renderRank();
       app.querySelector(`[data-c="${c}"]`).focus({ preventScroll: true });
-    });
+    };
+    app.querySelectorAll("[data-c]").forEach(b => b.onclick = () => toggle(b.dataset.c));
+    app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => toggle(b.dataset.s));
+    addFab();
     app.querySelectorAll("[data-z]").forEach(b => b.onclick = () => openLB(IMG[b.dataset.z], "상황 " + b.dataset.z + " 화면"));
     document.getElementById("rBack").onclick = () => go(step - 1);
     const rs = document.getElementById("rReset");
