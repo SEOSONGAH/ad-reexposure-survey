@@ -141,6 +141,18 @@ input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3
 .likert button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
 
+/* rank */
+.rank-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; margin-top: 4px; }
+@media (min-width: 860px) { .rank-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; } }
+.rank-item { display: grid; gap: 6px; justify-items: center; }
+.rank-card { position: relative; display: block; width: 100%; max-width: 210px; padding: 0; border: 0; background: transparent; cursor: pointer; border-radius: 18px; }
+.rank-card .phone { max-width: none; border-radius: 16px; box-shadow: none; transition: outline-color .15s; outline: 3px solid transparent; outline-offset: 3px; }
+.rank-card[aria-pressed="true"] .phone { outline-color: var(--accent); }
+.rank-badge { position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.rank-name { font-size: 15px; font-weight: 500; text-align: center; }
+.rank-name b { color: var(--accent); font-weight: 600; }
+.rank-zoom { background: transparent; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; }
+
 /* lightbox */
 .lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(5, 10, 15, .82); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .lightbox img { max-height: calc(100vh - 90px); max-width: 100%; width: auto; border-radius: 22px; }
@@ -221,7 +233,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     ["AC", "‘7일간 보지 않기’를 선택한 이후, 이 광고가 나타난 상황에 대해 어떻게 생각하십니까?"]
   ];
   const groupOf = k => k.replace(/\d+$/, "");
-  const STEPS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "done"];
+  const STEPS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "rank", "done"];
   const LS_KEY = "adReexposureSurvey.responses.v1";
 
   // ---------- 상태 ----------
@@ -232,6 +244,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     tapped: false, tappedAt: null, closed: false, closedAt: null,
     P: "",
     answers: { A: {}, B: {}, C: {}, D: {} },
+    rank: [], // 기대와 거리가 먼 순서 (첫 번째 = 가장 멀었음)
     times: {}
   });
   let S = newState();
@@ -252,11 +265,13 @@ th { background: var(--bg); position: sticky; top: 0; }
     const row = {
       response_id: r.id, group: r.group ?? "", order: r.order, started_at: r.startedAt, submitted_at: r.submittedAt,
       gender: r.info.gender, age: r.info.age,
-      tapped_7day: r.tapped ? 1 : 0, P_expect: r.P
+      tapped_7day: r.tapped ? 1 : 0, P_expect: r.P,
+      rank_order: (r.rank || []).join("")
     };
     for (const c of ["A", "B", "C", "D"]) {
       const a = (r.answers && r.answers[c]) || {};
       row[c + "_pos"] = r.order ? String(r.order).indexOf(c) + 1 : "";
+      row[c + "_rank"] = r.rank && r.rank.includes(c) ? r.rank.indexOf(c) + 1 : "";
       for (const [k] of ITEMS) row[c + "_" + k] = a[k] ?? "";
       row[c + "_AC3_R"] = a.AC3 ? 8 - a.AC3 : "";
     }
@@ -271,7 +286,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   }
 
   // ---------- 진행 표시 ----------
-  const LABELS = { info: "참가자 정보", scenario: "상황 안내", expect: "사전 기대", done: "제출 완료" };
+  const LABELS = { info: "참가자 정보", scenario: "상황 안내", expect: "사전 기대", rank: "순서 정하기", done: "제출 완료" };
   function setProgress() {
     const k = STEPS[step];
     const total = STEPS.length - 1;
@@ -297,6 +312,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     if (k === "scenario") return renderScenario();
     if (k === "expect") return renderExpect();
     if (k.startsWith("cond-")) return renderCond(k.slice(5));
+    if (k === "rank") return renderRank();
     if (k === "done") return renderDone();
   }
 
@@ -441,8 +457,6 @@ th { background: var(--bg); position: sticky; top: 0; }
 
   function renderCond(c) {
     const ans = S.answers[c];
-    const idx = ORDER.indexOf(c) + 1;
-    const isLast = idx === ORDER.length;
     app.innerHTML = `
       <div class="cond-head">
         <p class="eyebrow">상황 ${c}</p>
@@ -478,7 +492,7 @@ th { background: var(--bg); position: sticky; top: 0; }
           <p class="err" id="cErr" hidden></p>
           <div class="btn-row">
             <button class="btn ghost" type="button" id="cBack">이전</button>
-            <button class="btn" type="button" id="cNext">${isLast ? "제출하기" : "다음"}</button>
+            <button class="btn" type="button" id="cNext">다음</button>
           </div>
         </div>
       </div>`;
@@ -504,7 +518,56 @@ th { background: var(--bg); position: sticky; top: 0; }
         document.getElementById("item-" + missing[0]).scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
-      if (isLast) submit(); else go(step + 1);
+      go(step + 1);
+    };
+  }
+
+  // 마지막 화면: 네 상황을 집단 제시 순서대로 보여 주고, 기대와 거리가 먼 순서대로 눌러 1~4 번호를 매김
+  function renderRank() {
+    const rank = S.rank;
+    app.innerHTML = `
+      <div class="cond-head">
+        <p class="eyebrow">마지막 질문</p>
+        <h2 class="title">봤던 상황 중 가장 기대했던 것과 거리가 멀었던 순서대로 나열해 주세요.</h2>
+        <p class="lead">기대와 가장 거리가 멀었던 화면부터 차례로 눌러 주세요. 누른 순서대로 1~4 번호가 붙고, 다시 누르면 취소됩니다.</p>
+      </div>
+      <div class="stack">
+        <div class="scale-key"><span>1 = 기대와 가장 거리가 멀었음</span><span>4 = 기대와 가장 가까웠음</span></div>
+        <div class="rank-grid">
+          ${ORDER.map(c => {
+            const n = rank.indexOf(c) + 1;
+            return `
+            <div class="rank-item">
+              <button type="button" class="rank-card" data-c="${c}" aria-pressed="${n > 0}" aria-label="${c}. ${COND[c]}${n ? ", " + n + "번째" : ""}">
+                <div class="phone"><img src="${IMG[c]}" alt="" width="402" height="944"></div>
+                ${n ? `<span class="rank-badge" aria-hidden="true">${n}</span>` : ""}
+              </button>
+              <p class="rank-name"><b>${c}.</b> ${COND[c]}</p>
+              <button type="button" class="rank-zoom" data-z="${c}">크게 보기</button>
+            </div>`;
+          }).join("")}
+        </div>
+        <p class="err" id="rErr" hidden>네 화면 모두 순서를 정해 주세요.</p>
+        <div class="btn-row">
+          <button class="btn ghost" type="button" id="rBack">이전</button>
+          ${rank.length ? `<button class="btn ghost" type="button" id="rReset">다시 고르기</button>` : ""}
+          <button class="btn" type="button" id="rNext" ${rank.length === ORDER.length ? "" : "disabled"}>제출하기</button>
+        </div>
+      </div>`;
+    app.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+      const c = b.dataset.c;
+      const i = rank.indexOf(c);
+      if (i >= 0) rank.splice(i, 1); else rank.push(c);
+      renderRank();
+      app.querySelector(`[data-c="${c}"]`).focus({ preventScroll: true });
+    });
+    app.querySelectorAll("[data-z]").forEach(b => b.onclick = () => openLB(IMG[b.dataset.z], b.dataset.z + ". " + COND[b.dataset.z]));
+    document.getElementById("rBack").onclick = () => go(step - 1);
+    const rs = document.getElementById("rReset");
+    if (rs) rs.onclick = () => { rank.length = 0; renderRank(); };
+    document.getElementById("rNext").onclick = () => {
+      if (rank.length !== ORDER.length) { document.getElementById("rErr").hidden = false; return; }
+      submit();
     };
   }
 
