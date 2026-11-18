@@ -114,6 +114,17 @@ input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3
   .two-col .phone img { height: 100%; object-fit: contain; }
 }
 @media (max-width: 859px) { .two-col .phone { max-width: 250px; } }
+/* 조건 제시 전 안내 화면 */
+.intro-stage { position: relative; min-height: min(76vh, 720px); display: grid; place-items: center; overflow: hidden; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); padding: 40px 20px; }
+.intro-stage .bg { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
+.intro-stage .bg img { height: 108%; width: auto; max-width: none; opacity: .14; filter: blur(1.5px) grayscale(.2); border-radius: 36px; }
+.intro-stage .bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, var(--surface) 0%, transparent 70%); opacity: .75; }
+.intro-copy { position: relative; max-width: 520px; text-align: center; display: grid; gap: 18px; }
+.intro-copy .intro-head { font-size: clamp(22px, 4.6vw, 30px); font-weight: 700; line-height: 1.35; text-wrap: balance; }
+.intro-copy .intro-body { display: grid; gap: 10px; font-size: clamp(16px, 2.6vw, 18px); line-height: 1.7; text-wrap: pretty; }
+.intro-copy .intro-body b { color: var(--accent); font-weight: 600; }
+.intro-copy .btn-row { justify-content: center; margin-top: 10px; }
+.expect-block { border-top: 2px solid var(--fg); padding-top: 20px; margin-top: 8px; }
 .zoom-btn { display: block; margin: 10px auto 0; background: transparent; border: 0; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; }
 
 /* P options */
@@ -183,7 +194,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   <div class="topbar-in">
     <span class="label" id="stepLabel">참가자 정보</span>
     <div class="track" aria-hidden="true"><i id="bar"></i></div>
-    <span class="step-no" id="stepNo">1 / 7</span>
+    <span class="step-no" id="stepNo">1 / 8</span>
   </div>
 </header>
 <main><div class="wrap" id="app"></div></main>
@@ -207,7 +218,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     return GROUP_ORDERS[g] ? Number(g) : 1;
   })();
   const ORDER = GROUP_ORDERS[GROUP].split("");
-  const IMG = { base: "base.jpg", home: "home.jpg", A: "A.jpg", B: "B.jpg", C: "C.jpg", D: "D.jpg?v=2" };
+  const IMG = { base: "base.jpg", home: "home.jpg", A: "A.jpg?v=2", B: "B.jpg", C: "C.jpg", D: "D.jpg?v=2" };
   const COND = {
     A: "동일 광고 · 팝업", B: "동일 광고 · 고정 배너",
     C: "다른 광고 · 팝업", D: "다른 광고 · 고정 배너"
@@ -240,7 +251,9 @@ th { background: var(--bg); position: sticky; top: 0; }
     ["AC", "‘7일간 보지 않기’를 선택한 이후, 이 광고가 나타난 상황에 대해 어떻게 생각하십니까?"]
   ];
   const groupOf = k => k.replace(/\d+$/, "");
-  const STEPS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "rank", "done"];
+  const STEPS = ["info", "scenario", "intro", ...ORDER.map(c => "cond-" + c), "rank", "done"];
+  // 응답 데이터의 소요 시간 열 (구글 시트 열 순서 유지를 위해 고정). expect = 팝업을 닫은 뒤 사전 기대 문항에 응답한 시간
+  const TIME_KEYS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "rank"];
   const LS_KEY = "adReexposureSurvey.responses.v1";
 
   // ---------- 상태 ----------
@@ -255,7 +268,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     times: {}
   });
   let S = newState();
-  let step = 0, stepStart = Date.now();
+  let step = 0, stepStart = Date.now(), timeKey = null;
   const app = document.getElementById("app");
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -282,7 +295,7 @@ th { background: var(--bg); position: sticky; top: 0; }
       for (const [k] of ITEMS) row[c + "_" + k] = a[k] ?? "";
       row[c + "_AC3_R"] = a.AC3 ? 8 - a.AC3 : "";
     }
-    for (const k of STEPS.slice(0, -1)) row["sec_" + k] = r.times && r.times[k] != null ? r.times[k] : "";
+    for (const k of TIME_KEYS) row["sec_" + k] = r.times && r.times[k] != null ? r.times[k] : "";
     return row;
   }
   function toCSV(rows) {
@@ -293,7 +306,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   }
 
   // ---------- 진행 표시 ----------
-  const LABELS = { info: "참가자 정보", scenario: "상황 안내", expect: "사전 기대", rank: "순서 정하기", done: "제출 완료" };
+  const LABELS = { info: "참가자 정보", scenario: "상황 안내", intro: "안내", rank: "순서 정하기", done: "제출 완료" };
   function setProgress() {
     const k = STEPS[step];
     const total = STEPS.length - 1;
@@ -302,10 +315,10 @@ th { background: var(--bg); position: sticky; top: 0; }
     document.getElementById("stepNo").textContent = k === "done" ? "완료" : n + " / " + total;
     document.getElementById("bar").style.width = (k === "done" ? 100 : (step / total) * 100) + "%";
   }
+  function addTime(k) { S.times[k] = Math.round((Date.now() - stepStart) / 100) / 10 + (S.times[k] || 0); stepStart = Date.now(); }
   function go(next) {
-    const k = STEPS[step];
-    S.times[k] = Math.round((Date.now() - stepStart) / 100) / 10 + (S.times[k] || 0);
-    step = next; stepStart = Date.now();
+    addTime(timeKey || STEPS[step]);
+    step = next; stepStart = Date.now(); timeKey = null;
     render();
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   }
@@ -317,7 +330,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     const k = STEPS[step];
     if (k === "info") return renderInfo();
     if (k === "scenario") return renderScenario();
-    if (k === "expect") return renderExpect();
+    if (k === "intro") return renderIntro();
     if (k.startsWith("cond-")) return renderCond(k.slice(5));
     if (k === "rank") return renderRank();
     if (k === "done") return renderDone();
@@ -377,6 +390,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   }
 
   function renderScenario() {
+    if (S.closed) timeKey = "expect";
     app.innerHTML = `
       <div class="narrow stack">
         <div>
@@ -400,16 +414,17 @@ th { background: var(--bg); position: sticky; top: 0; }
           </div>
           <p class="tap-hint" id="tapNote"></p>
         </div>
-        <div class="btn-row" style="margin-top:0"><button class="btn" id="scNext" type="button" ${S.closed ? "" : "disabled"}>다음</button></div>
+        <div id="expectSlot"></div>
       </div>`;
     const note = document.getElementById("tapNote");
     const setNote = (text, cls) => { note.textContent = text; note.className = cls; };
     const refreshNote = () => {
-      if (S.closed) setNote("‘7일간 보지 않기’를 선택하고 팝업을 닫았습니다. ‘다음’을 눌러 주세요.", "done-note");
+      if (S.closed) setNote("‘7일간 보지 않기’를 선택하고 팝업을 닫았습니다. 아래 문항에 응답해 주세요.", "done-note");
       else if (S.tapped) setNote("이제 팝업의 ‘닫기’를 눌러 주세요.", "tap-hint");
       else setNote("팝업의 ‘7일간 보지 않기’를 눌러 주세요.", "tap-hint");
     };
     refreshNote();
+    if (S.closed) showExpect(false);
     const hs = document.getElementById("hotspot");
     if (hs) hs.onclick = () => {
       S.tapped = !S.tapped;
@@ -422,44 +437,63 @@ th { background: var(--bg); position: sticky; top: 0; }
     if (cs) cs.onclick = () => {
       if (!S.tapped) { setNote("먼저 ‘7일간 보지 않기’를 선택해 주세요.", "err tap-hint"); return; }
       S.closed = true; S.closedAt = new Date().toISOString();
+      addTime("scenario"); timeKey = "expect";
       hs.remove(); cs.remove(); document.getElementById("checkMark").remove();
       const img = document.getElementById("phoneImg");
       img.src = IMG.home; img.alt = "팝업이 닫힌 Shoppe 앱 홈 화면";
-      document.getElementById("scNext").disabled = false;
       refreshNote();
+      showExpect(true);
     };
-    document.getElementById("scNext").onclick = () => go(step + 1);
   }
 
-  function renderExpect() {
-    app.innerHTML = `
-      <div class="narrow">
-        <div class="stack">
-          <div>
-            <p class="eyebrow">사전 기대</p>
-            <h2 class="title">‘7일간 보지 않기’를 선택하고 ‘닫기’를 눌렀습니다. 아래 내용에 대해 응답해 주세요.</h2>
-          </div>
-          <div>
-            <p class="question">‘7일간 보지 않기’를 선택할 때, 어떤 광고가 어떤 형태까지 보이지 않기를 기대하셨습니까?</p>
-            <p class="muted" style="margin-top:4px">기대한 범위에 가장 가까운 하나를 선택해 주세요.</p>
-          </div>
-          <div class="opts" role="radiogroup" aria-label="예상 차단 범위">
-            ${P_OPTS.map(([v, t]) => `<button type="button" class="opt" role="radio" data-p="${v}" aria-checked="${S.P === v}"><span class="dot"></span><span>${t}</span></button>`).join("")}
-          </div>
-          <p class="err" id="pErr" hidden>하나를 선택해 주세요.</p>
-          <div class="btn-row">
-            <button class="btn ghost" type="button" id="pBack">이전</button>
-            <button class="btn" type="button" id="pNext">다음</button>
-          </div>
+  // 팝업을 닫으면 같은 화면 아래에 사전 기대 문항이 나타남
+  function showExpect(scroll) {
+    const slot = document.getElementById("expectSlot");
+    slot.innerHTML = `
+      <section class="expect-block stack" id="expectBlock" aria-labelledby="expectQ">
+        <div>
+          <p class="eyebrow">사전 기대</p>
+          <p class="question" id="expectQ" style="margin-top:6px">‘7일간 보지 않기’를 선택할 때, 어떤 광고가 어떤 형태까지 보이지 않기를 기대하셨습니까?</p>
+          <p class="muted" style="margin-top:4px">기대한 범위에 가장 가까운 하나를 선택해 주세요.</p>
         </div>
-      </div>`;
+        <div class="opts" role="radiogroup" aria-labelledby="expectQ">
+          ${P_OPTS.map(([v, t]) => `<button type="button" class="opt" role="radio" data-p="${v}" aria-checked="${S.P === v}"><span class="dot"></span><span>${t}</span></button>`).join("")}
+        </div>
+        <p class="err" id="pErr" hidden>하나를 선택해 주세요.</p>
+        <div class="btn-row" style="margin-top:6px"><button class="btn" type="button" id="pNext">다음</button></div>
+      </section>`;
     app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
       S.P = b.dataset.p;
       app.querySelectorAll("[data-p]").forEach(x => x.setAttribute("aria-checked", x === b));
       document.getElementById("pErr").hidden = true;
     });
-    document.getElementById("pBack").onclick = () => go(step - 1);
     document.getElementById("pNext").onclick = () => { if (!S.P) { document.getElementById("pErr").hidden = false; return; } go(step + 1); };
+    if (scroll) {
+      const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setTimeout(() => document.getElementById("expectBlock").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }), 450);
+    }
+  }
+
+  // 조건별 화면에 들어가기 전 안내
+  function renderIntro() {
+    app.innerHTML = `
+      <div class="intro-stage">
+        <div class="bg" aria-hidden="true"><img src="${IMG.home}" alt=""></div>
+        <div class="intro-copy">
+          <h2 class="intro-head">앞서 본 상황과는<br>별개의 상황입니다.</h2>
+          <div class="intro-body">
+            <p>처음 ‘7일간 보지 않기’를 선택한 뒤,<br><b>잠시 후 같은 앱에 다시 접속했다고 가정</b>해 주세요.</p>
+            <p>이때 아래와 같은 광고 화면이 나타났습니다.</p>
+            <p>화면을 확인한 뒤 각 문항에 응답해 주세요.</p>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost" type="button" id="iBack">이전</button>
+            <button class="btn" type="button" id="iNext">다음</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById("iBack").onclick = () => go(step - 1);
+    document.getElementById("iNext").onclick = () => go(step + 1);
   }
 
   function renderCond(c) {
@@ -467,8 +501,8 @@ th { background: var(--bg); position: sticky; top: 0; }
     app.innerHTML = `
       <div class="cond-head">
         <p class="eyebrow">상황 ${c}</p>
-        <h2 class="title">‘7일간 보지 않기’를 선택한 뒤 아래와 같은 광고가 다시 나타났습니다.</h2>
-        <p class="lead">화면을 다시 확인하면서 각 문항에 응답해 주세요.</p>
+        <h2 class="title">‘7일간 보지 않기’를 선택한 뒤 아래와 같은 광고가 나타났습니다.</h2>
+        <p class="lead">화면을 확인하면서 각 문항에 응답해 주세요.</p>
       </div>
       <div class="two-col">
         <div class="sticky">
@@ -526,14 +560,14 @@ th { background: var(--bg); position: sticky; top: 0; }
     };
   }
 
-  // ‘처음 화면 다시 보기’ 버튼: 처음 본 광고 팝업(기본 이미지)을 크게 보여 줌.
+  // ‘처음 화면 보기’ 버튼: 처음 본 광고 팝업(기본 이미지)을 크게 보여 줌.
   // 아래쪽 ‘다음/제출하기’ 버튼 줄이 화면에 들어오면 가리지 않도록 숨김
   let fabObs = null;
   function addFab() {
     document.querySelector(".fab")?.remove();
     if (fabObs) { fabObs.disconnect(); fabObs = null; }
     const fab = document.createElement("button");
-    fab.className = "fab"; fab.type = "button"; fab.textContent = "처음 화면 다시 보기";
+    fab.className = "fab"; fab.type = "button"; fab.textContent = "처음 화면 보기";
     fab.onclick = () => openLB(IMG.base, "처음 본 광고 팝업 화면");
     document.body.appendChild(fab);
     const row = app.querySelector(".btn-row");
@@ -619,8 +653,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     return false;
   }
   async function submit() {
-    const k = STEPS[step];
-    S.times[k] = Math.round((Date.now() - stepStart) / 100) / 10 + (S.times[k] || 0);
+    addTime(STEPS[step]);
     S.submittedAt = new Date().toISOString();
     S.order = ORDER.join("");
     S.group = GROUP;
