@@ -194,7 +194,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   <div class="topbar-in">
     <span class="label" id="stepLabel">참가자 정보</span>
     <div class="track" aria-hidden="true"><i id="bar"></i></div>
-    <span class="step-no" id="stepNo">1 / 8</span>
+    <span class="step-no" id="stepNo">1 / 7</span>
   </div>
 </header>
 <main><div class="wrap" id="app"></div></main>
@@ -251,7 +251,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     ["AC", "‘7일간 보지 않기’를 선택한 이후, 이 광고가 나타난 상황에 대해 어떻게 생각하십니까?"]
   ];
   const groupOf = k => k.replace(/\d+$/, "");
-  const STEPS = ["info", "scenario", "intro", ...ORDER.map(c => "cond-" + c), "rank", "done"];
+  const STEPS = ["info", "scenario", ...ORDER.map(c => "cond-" + c), "rank", "done"];
   // 응답 데이터의 소요 시간 열 (구글 시트 열 순서 유지를 위해 고정). expect = 팝업을 닫은 뒤 사전 기대 문항에 응답한 시간
   const TIME_KEYS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "rank"];
   const LS_KEY = "adReexposureSurvey.responses.v1";
@@ -264,6 +264,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     tapped: false, tappedAt: null, closed: false, closedAt: null,
     P: "",
     answers: { A: {}, B: {}, C: {}, D: {} },
+    introSeen: {}, // 조건별 안내 화면을 이미 본 조건
     rank: [], // 당시 기대와 가까운 순서 (첫 번째 = 가장 가까움, 마지막 = 가장 다름)
     times: {}
   });
@@ -306,7 +307,7 @@ th { background: var(--bg); position: sticky; top: 0; }
   }
 
   // ---------- 진행 표시 ----------
-  const LABELS = { info: "참가자 정보", scenario: "상황 안내", intro: "안내", rank: "순서 정하기", done: "제출 완료" };
+  const LABELS = { info: "참가자 정보", scenario: "상황 안내", rank: "순서 정하기", done: "제출 완료" };
   function setProgress() {
     const k = STEPS[step];
     const total = STEPS.length - 1;
@@ -330,7 +331,6 @@ th { background: var(--bg); position: sticky; top: 0; }
     const k = STEPS[step];
     if (k === "info") return renderInfo();
     if (k === "scenario") return renderScenario();
-    if (k === "intro") return renderIntro();
     if (k.startsWith("cond-")) return renderCond(k.slice(5));
     if (k === "rank") return renderRank();
     if (k === "done") return renderDone();
@@ -474,18 +474,27 @@ th { background: var(--bg); position: sticky; top: 0; }
     }
   }
 
-  // 조건별 화면에 들어가기 전 안내
-  function renderIntro() {
+  // 각 조건 화면에 들어가기 전 안내. 첫 번째 조건과 이후 조건의 문구가 다름
+  function renderIntro(c) {
+    const first = ORDER.indexOf(c) === 0;
+    timeKey = "intro";
+    document.getElementById("stepLabel").textContent = "안내";
     app.innerHTML = `
       <div class="intro-stage">
         <div class="bg" aria-hidden="true"><img src="${IMG.home}" alt=""></div>
         <div class="intro-copy">
+          ${first ? `
+          <h2 class="intro-head">잠시 후 같은 앱에<br>다시 접속한 상황입니다.</h2>
+          <div class="intro-body">
+            <p>이때 아래와 같은 광고 화면이 나타났습니다.</p>
+            <p>화면을 확인한 뒤 각 문항에 응답해 주세요.</p>
+          </div>` : `
           <h2 class="intro-head">앞서 본 상황과는<br>별개의 상황입니다.</h2>
           <div class="intro-body">
             <p>처음 ‘7일간 보지 않기’를 선택한 뒤,<br><b>잠시 후 같은 앱에 다시 접속했다고 가정</b>해 주세요.</p>
             <p>이때 아래와 같은 광고 화면이 나타났습니다.</p>
             <p>화면을 확인한 뒤 각 문항에 응답해 주세요.</p>
-          </div>
+          </div>`}
           <div class="btn-row">
             <button class="btn ghost" type="button" id="iBack">이전</button>
             <button class="btn" type="button" id="iNext">다음</button>
@@ -493,10 +502,16 @@ th { background: var(--bg); position: sticky; top: 0; }
         </div>
       </div>`;
     document.getElementById("iBack").onclick = () => go(step - 1);
-    document.getElementById("iNext").onclick = () => go(step + 1);
+    document.getElementById("iNext").onclick = () => {
+      addTime("intro"); timeKey = null;
+      S.introSeen[c] = true;
+      render();
+      window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    };
   }
 
   function renderCond(c) {
+    if (!S.introSeen[c]) return renderIntro(c);
     const ans = S.answers[c];
     app.innerHTML = `
       <div class="cond-head">
