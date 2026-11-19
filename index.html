@@ -167,9 +167,9 @@ input.ta { min-height: 0; }
 .base-btn { display: none; }
 @media (min-width: 860px) {
   .two-col .zoom-btn { display: none; }
-  .base-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px; padding: 13px 16px; border-radius: 12px; border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 15px; cursor: pointer; transition: background .15s, color .15s; }
-  .base-btn svg { width: 18px; height: 18px; flex: none; }
-  .base-btn:hover { background: var(--accent); color: var(--accent-ink); }
+  /* 라이트 모드: 검정 바탕 + 흰 글씨 / 다크 모드: 밝은 바탕 + 검정 글씨 */
+  .base-btn { display: block; width: 100%; margin-top: 14px; padding: 13px 16px; border-radius: 12px; border: 0; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 15px; cursor: pointer; transition: opacity .15s; }
+  .base-btn:hover { opacity: .85; }
   .fab.fab-mobile { display: none; }
 }
 .reveal { animation: reveal .35s ease; }
@@ -636,7 +636,7 @@ th { background: var(--bg); position: sticky; top: 0; }
         <div class="sticky">
           <div class="phone"><img src="${IMG[c]}" alt="상황 ${c} 화면" width="402" height="944"></div>
           <button class="zoom-btn" type="button" id="zoomBtn">화면 크게 보기</button>
-          <button class="base-btn" type="button" id="baseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>처음 화면 다시 보기</button>
+          <button class="base-btn" type="button" id="baseBtn">처음 화면 다시 보기</button>
         </div>
         <div class="stack" style="align-content:start">
           <section class="group" aria-labelledby="g-${c}-MC">
