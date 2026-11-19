@@ -1,0 +1,797 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>광고 재노출 인식 설문</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 한 화면에 한 단계. 자극 화면은 데스크톱에서 왼쪽 고정, 모바일에서는 상단 + 확대 보기 */
+:root {
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --fg: #171717;
+  --muted: #6b6b6b;
+  --line: #e0e0e0;
+  --accent: #1d3fd0;
+  --accent-ink: #ffffff;
+  --accent-soft: #eef1fc;
+  --warn: #c0262d;
+  --warn-soft: #fdeeee;
+  --ok: #1d3fd0;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121212; --surface: #1c1c1c; --fg: #ededed; --muted: #a3a3a3; --line: #333333;
+  --accent: #7d95ff; --accent-ink: #0b0f22; --accent-soft: #1e2446;
+  --warn: #f08a90; --warn-soft: #3a1d21; --ok: #7d95ff; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121212; --surface: #1c1c1c; --fg: #ededed; --muted: #a3a3a3; --line: #333333;
+  --accent: #7d95ff; --accent-ink: #0b0f22; --accent-soft: #1e2446;
+  --warn: #f08a90; --warn-soft: #3a1d21; --ok: #7d95ff; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-body); font-size: 16px; line-height: 1.6; -webkit-text-size-adjust: 100%; word-break: keep-all; overflow-wrap: anywhere; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; margin: 0; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+.topbar-in { max-width: 1040px; margin: 0 auto; padding-block: 10px; display: flex; align-items: center; gap: 14px; }
+.topbar .label { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.track { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.track > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s ease; }
+.step-no { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+.narrow { max-width: 620px; margin: 0 auto; }
+
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--accent); }
+.title { font-size: clamp(22px, 4.4vw, 28px); font-weight: 700; margin-top: 6px; }
+.lead { color: var(--muted); margin-top: 10px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+.stack { display: grid; gap: 18px; }
+
+/* form */
+.field { display: grid; gap: 8px; }
+.field > label, .field > .flabel { font-weight: 600; font-size: 15px; }
+input[type=text], input[type=number] { width: 100%; padding: 12px 14px; font: inherit; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+input:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg-2 { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 560px) { .seg-5 { grid-template-columns: repeat(5, 1fr); } }
+.choice { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 12px 10px; cursor: pointer; text-align: center; font-weight: 500; transition: background .15s, border-color .15s; }
+.choice[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.err { color: var(--warn); font-size: 14px; font-weight: 500; }
+
+.btn-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 12px; padding: 14px 26px; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-ink); min-width: 140px; }
+.btn[disabled] { opacity: .4; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); min-width: 0; }
+
+/* scenario */
+.scenario { font-size: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.scenario p + p { margin-top: 2px; }
+.scenario .scenario-label { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.intro { display: grid; gap: 12px; margin-top: 16px; font-size: 15px; color: var(--fg); }
+.facts { margin: 4px 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.facts > div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--line); }
+.facts dt { font-weight: 600; color: var(--muted); font-size: 14px; }
+.facts dd { margin: 0; }
+.question { font-size: 16px; font-weight: 600; text-wrap: pretty; }
+.opt { font-size: 15px; }
+.instruction { font-size: 16px; font-weight: 500; color: var(--fg); }
+.scenario-phone { max-width: 300px; }
+
+/* phone stimulus */
+.phone { position: relative; width: 100%; max-width: 330px; margin: 0 auto; border-radius: 26px; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 10px 30px rgba(10, 30, 50, .12); }
+.phone img { display: block; width: 100%; height: auto; }
+.cond-tag { position: absolute; left: 10px; top: 10px; }
+.hotspot { position: absolute; left: 9%; top: 67.6%; width: 35%; height: 5.8%; border: 0; background: transparent; cursor: pointer; border-radius: 8px; padding: 0; }
+.hotspot::after { content: ""; position: absolute; inset: -3px; border-radius: 10px; border: 2px solid #e8434a; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hotspot::after { animation: none; opacity: .8; } .track > i { transition: none; } }
+.close-spot { left: 74%; width: 17.5%; }
+.hotspot[aria-checked="true"]::after { animation: none; opacity: 0; }
+.check-mark { pointer-events: none; position: absolute; left: 13.6%; top: 69.75%; width: 3.4%; aspect-ratio: 1; background: #e8434a; border-radius: 2px; display: grid; place-items: center; }
+.check-mark svg { width: 80%; height: 80%; }
+.tap-hint { text-align: center; color: var(--muted); font-size: 14px; margin-top: 12px; }
+.done-note { text-align: center; color: var(--ok); font-weight: 600; font-size: 15px; margin-top: 12px; }
+
+.two-col { display: grid; gap: 28px; grid-template-columns: 1fr; }
+.cond-head { max-width: 760px; margin-bottom: 24px; }
+@media (min-width: 860px) {
+  .two-col { grid-template-columns: 340px minmax(0, 1fr); align-items: start; }
+  .two-col .sticky { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); }
+  .two-col .phone { max-height: calc(100vh - 130px); width: auto; aspect-ratio: 402 / 944; }
+  .two-col .phone img { height: 100%; object-fit: contain; }
+}
+@media (max-width: 859px) { .two-col .phone { max-width: 250px; } }
+/* 조건 제시 전 안내 화면 */
+.intro-stage { position: relative; min-height: min(76vh, 720px); display: grid; place-items: center; overflow: hidden; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); padding: 40px 20px; }
+.intro-stage .bg { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
+.intro-stage .bg img { height: 108%; width: auto; max-width: none; opacity: .14; filter: blur(1.5px) grayscale(.2); border-radius: 36px; }
+.intro-stage .bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, var(--surface) 0%, transparent 70%); opacity: .75; }
+.intro-copy { position: relative; max-width: 520px; text-align: center; display: grid; gap: 18px; }
+.intro-copy .intro-head { font-size: clamp(22px, 4.6vw, 30px); font-weight: 700; line-height: 1.35; text-wrap: balance; }
+.intro-copy .intro-body { display: grid; gap: 10px; font-size: clamp(16px, 2.6vw, 18px); line-height: 1.7; text-wrap: pretty; }
+.intro-copy .intro-body b { color: var(--accent); font-weight: 600; }
+.intro-copy .btn-row { justify-content: center; margin-top: 10px; }
+.expect-block { border-top: 2px solid var(--fg); padding-top: 20px; margin-top: 8px; }
+.zoom-btn { display: block; margin: 10px auto 0; background: transparent; border: 0; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; }
+
+/* P options */
+.opts { display: grid; gap: 10px; }
+.opt { display: flex; gap: 14px; align-items: center; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
+.opt .dot { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
+.opt[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt[aria-checked="true"] .dot { border-color: var(--accent); }
+.opt[aria-checked="true"] .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+
+/* likert */
+.scale-key { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.groups { display: grid; gap: 28px; }
+.group { display: grid; gap: 12px; }
+.group-head { display: grid; gap: 4px; padding-top: 4px; border-top: 2px solid var(--fg); padding-block: 12px 2px; }
+.group-no { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--accent); }
+.group-q { font-size: 18px; font-weight: 700; }
+.items { display: grid; gap: 12px; }
+.item { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.item.missing { border-color: var(--warn); background: var(--warn-soft); }
+.item .q { font-weight: 500; }
+.item .q b { font-family: var(--font-mono); font-weight: 500; color: var(--accent); font-size: 13px; margin-right: 8px; }
+.likert { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.likert button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; min-height: 44px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; padding: 0; }
+.likert button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+
+/* rank */
+.rank-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; margin-top: 4px; }
+@media (min-width: 860px) { .rank-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; } }
+.rank-item { display: grid; gap: 6px; justify-items: center; }
+.rank-card { position: relative; display: block; width: 100%; max-width: 210px; padding: 0; border: 0; background: transparent; cursor: pointer; border-radius: 18px; }
+.rank-card .phone { max-width: none; border-radius: 16px; box-shadow: none; transition: outline-color .15s; outline: 3px solid transparent; outline-offset: 3px; }
+.rank-card[aria-pressed="true"] .phone { outline-color: var(--accent); }
+.rank-badge { position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.rank-name { font-size: 20px; font-weight: 600; color: var(--accent); text-align: center; line-height: 1.2; margin-top: 4px; }
+.rank-scale { margin-top: 6px; font-weight: 600; font-size: 15px; }
+.rank-slots { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 41px); z-index: 10; background: var(--bg); display: flex; align-items: center; justify-content: center; gap: 8px; padding-block: 10px; margin-top: -12px; }
+.slot { width: 56px; height: 56px; border-radius: 10px; background: var(--line); color: var(--muted); display: grid; place-items: center; font-size: 15px; font-weight: 500; border: 0; padding: 0; }
+.slot.filled { background: var(--surface); border: 2px solid var(--accent); color: var(--accent); font-size: 24px; font-weight: 700; cursor: pointer; }
+.slot-arrow { color: var(--muted); font-size: 16px; }
+.rank-help { text-align: center; margin: 2px 0 14px; }
+.rank-zoom { background: transparent; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; }
+
+/* lightbox */
+.lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(5, 10, 15, .82); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.lightbox img { max-height: calc(100vh - 90px); max-width: 100%; width: auto; border-radius: 22px; }
+.lightbox .close { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: max(16px, env(safe-area-inset-top, 0px)); background: #fff; color: #111; border: 0; border-radius: 999px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+.fab { position: fixed; z-index: 40; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25); cursor: pointer; }
+.fab { transition: opacity .2s, transform .2s; }
+.fab.fab-hide { opacity: 0; transform: translateY(12px); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .fab { transition: none; } }
+
+/* done / results */
+.code { font-family: var(--font-mono); font-size: 14px; background: var(--bg); border: 1px dashed var(--line); padding: 10px 12px; border-radius: 8px; word-break: break-all; }
+.status { font-weight: 600; }
+.status.ok { color: var(--ok); }
+.status.bad { color: var(--warn); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; text-align: left; }
+th { background: var(--bg); position: sticky; top: 0; }
+.muted { color: var(--muted); font-size: 14px; }
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="label" id="stepLabel">참가자 정보</span>
+    <div class="track" aria-hidden="true"><i id="bar"></i></div>
+    <span class="step-no" id="stepNo">1 / 7</span>
+  </div>
+</header>
+<main><div class="wrap" id="app"></div></main>
+<div class="lightbox" id="lightbox" hidden>
+  <button class="close" id="lbClose" type="button">닫기</button>
+  <img id="lbImg" alt="">
+</div>
+
+<script>
+(() => {
+  // ---------- 설정 ----------
+  // ▼ 구글 시트로 응답을 받으려면 Apps Script 웹 앱 URL(https://script.google.com/macros/s/.../exec)을 따옴표 안에 넣으세요.
+  const SUBMIT_URL = "https://script.google.com/macros/s/AKfycby4ap8I0HRzTUL6oiK7qtLPgNKCUD8AxAwLltuE86LqSoFPLTTjUm3KOAuUq4N_8HAf/exec";
+
+  // 집단별 제시 순서. 링크 끝에 ?g=1 ~ ?g=4 를 붙여 배포합니다 (아티팩트에서는 #g1 ~ #g4).
+  const GROUP_ORDERS = { 1: "ABCD", 2: "BDAC", 3: "DCBA", 4: "CADB" };
+  const GROUP = (() => {
+    let g = null;
+    try { g = new URLSearchParams(location.search).get("g"); } catch {}
+    if (!g) { const m = location.hash.match(/^#g([1-4])$/); if (m) g = m[1]; }
+    return GROUP_ORDERS[g] ? Number(g) : 1;
+  })();
+  const ORDER = GROUP_ORDERS[GROUP].split("");
+  const IMG = { base: "base.jpg", home: "home.jpg", A: "A.jpg?v=2", B: "B.jpg", C: "C.jpg", D: "D.jpg?v=2" };
+  const COND = {
+    A: "동일 광고 · 팝업", B: "동일 광고 · 고정 배너",
+    C: "다른 광고 · 팝업", D: "다른 광고 · 고정 배너"
+  };
+  const P_OPTS = [
+    ["P1", "처음 본 광고가 팝업 형태로만 다시 나타나지 않는 것"],
+    ["P2", "처음 본 광고가 어떤 형태로도 다시 나타나지 않는 것"],
+    ["P3", "광고 내용과 관계없이 모든 팝업 광고가 나타나지 않는 것"],
+    ["P4", "광고 내용과 형태에 관계없이 모든 인앱 광고가 나타나지 않는 것"]
+  ];
+  const ITEMS = [
+    ["V1", "이 광고 노출은 이전에 표시한 나의 거부 의사가 무시되었다고 느껴진다."],
+    ["V2", "앞서 선택한 ‘7일간 보지 않기’ 기능이 충분히 존중되지 않았다고 느낀다."],
+    ["V3", "이번 광고 노출에는 앞서 표시한 나의 거부 의사가 충분히 반영되지 않았다고 생각한다."],
+    ["A1", "이러한 상황은 화가 난다."],
+    ["A2", "이러한 상황은 짜증 난다."],
+    ["A3", "이러한 상황은 성가시게 느껴진다."],
+    ["T1", "이 앱 서비스를 신뢰할 수 있다."],
+    ["T2", "이 앱 서비스를 믿을 수 있다."],
+    ["T3", "이 앱 서비스는 투명하다고 생각한다."],
+    ["AC1", "‘7일간 보지 않기’를 선택한 이후, 이러한 광고가 나타나는 것은 적절하다."],
+    ["AC2", "‘7일간 보지 않기’를 선택한 이후, 이러한 광고가 나타나는 것을 받아들일 수 있다."],
+    ["AC3", "‘7일간 보지 않기’를 선택한 이후, 이러한 광고가 나타나는 것은 바람직하지 않다."]
+  ];
+  // 참가자에게 보이는 메인 질문 (구성개념 이름은 노출하지 않음)
+  const GROUPS = [
+    ["V", "앞서 표시한 거부 의사(‘7일간 보지 않기’)가 이번 광고 노출에 어떻게 반영되었다고 느끼십니까?"],
+    ["A", "이 상황에서 느낀 감정에 대해 응답해 주세요."],
+    ["T", "이 앱 서비스에 대해 어떻게 생각하십니까?"],
+    ["AC", "‘7일간 보지 않기’를 선택한 이후, 이 광고가 나타난 상황에 대해 어떻게 생각하십니까?"]
+  ];
+  const groupOf = k => k.replace(/\d+$/, "");
+  const STEPS = ["info", "scenario", ...ORDER.map(c => "cond-" + c), "rank", "done"];
+  // 응답 데이터의 소요 시간 열 (구글 시트 열 순서 유지를 위해 고정). expect = 팝업을 닫은 뒤 사전 기대 문항에 응답한 시간
+  const TIME_KEYS = ["info", "scenario", "expect", ...ORDER.map(c => "cond-" + c), "rank"];
+  const LS_KEY = "adReexposureSurvey.responses.v1";
+
+  // ---------- 상태 ----------
+  const newState = () => ({
+    id: "R" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
+    startedAt: new Date().toISOString(),
+    info: { gender: "", age: "" },
+    tapped: false, tappedAt: null, closed: false, closedAt: null,
+    P: "",
+    answers: { A: {}, B: {}, C: {}, D: {} },
+    introSeen: {}, // 조건별 안내 화면을 이미 본 조건
+    rank: [], // 당시 기대와 가까운 순서 (첫 번째 = 가장 가까움, 마지막 = 가장 다름)
+    times: {}
+  });
+  let S = newState();
+  let step = 0, stepStart = Date.now(), timeKey = null;
+  const app = document.getElementById("app");
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // ---------- 저장소 (Artifact db, 없으면 브라우저에만) ----------
+  let dbP = null;
+  function getDb() {
+    if (!dbP) dbP = (window.claude && window.claude.use) ? window.claude.use("db").catch(() => null) : Promise.resolve(null);
+    return dbP;
+  }
+  function localAll() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; } }
+  function localAdd(r) { try { const a = localAll(); a.push(r); localStorage.setItem(LS_KEY, JSON.stringify(a)); return true; } catch { return false; } }
+
+  function flatten(r) {
+    const row = {
+      response_id: r.id, group: r.group ?? "", order: r.order, started_at: r.startedAt, submitted_at: r.submittedAt,
+      gender: r.info.gender, age: r.info.age,
+      tapped_7day: r.tapped ? 1 : 0, P_expect: r.P,
+      rank_order: (r.rank || []).join("")
+    };
+    for (const c of ["A", "B", "C", "D"]) {
+      const a = (r.answers && r.answers[c]) || {};
+      row[c + "_pos"] = r.order ? String(r.order).indexOf(c) + 1 : "";
+      row[c + "_rank"] = r.rank && r.rank.includes(c) ? r.rank.indexOf(c) + 1 : "";
+      for (const [k] of ITEMS) row[c + "_" + k] = a[k] ?? "";
+      row[c + "_AC3_R"] = a.AC3 ? 8 - a.AC3 : "";
+    }
+    for (const k of TIME_KEYS) row["sec_" + k] = r.times && r.times[k] != null ? r.times[k] : "";
+    return row;
+  }
+  function toCSV(rows) {
+    if (!rows.length) return "";
+    const cols = Object.keys(flatten(rows[0]));
+    const q = v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    return "﻿" + [cols.join(","), ...rows.map(r => { const f = flatten(r); return cols.map(c => q(f[c])).join(","); })].join("\n");
+  }
+
+  // ---------- 진행 표시 ----------
+  const LABELS = { info: "참가자 정보", scenario: "상황 안내", rank: "순서 정하기", done: "제출 완료" };
+  function setProgress() {
+    const k = STEPS[step];
+    const total = STEPS.length - 1;
+    const n = Math.min(step + 1, total);
+    document.getElementById("stepLabel").textContent = LABELS[k] || ("상황 " + k.slice(5));
+    document.getElementById("stepNo").textContent = k === "done" ? "완료" : n + " / " + total;
+    document.getElementById("bar").style.width = (k === "done" ? 100 : (step / total) * 100) + "%";
+  }
+  function addTime(k) { S.times[k] = Math.round((Date.now() - stepStart) / 100) / 10 + (S.times[k] || 0); stepStart = Date.now(); }
+  function go(next) {
+    addTime(timeKey || STEPS[step]);
+    step = next; stepStart = Date.now(); timeKey = null;
+    render();
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }
+
+  // ---------- 화면 ----------
+  function render() {
+    setProgress();
+    document.querySelector(".fab")?.remove();
+    const k = STEPS[step];
+    if (k === "info") return renderInfo();
+    if (k === "scenario") return renderScenario();
+    if (k.startsWith("cond-")) return renderCond(k.slice(5));
+    if (k === "rank") return renderRank();
+    if (k === "done") return renderDone();
+  }
+
+  function renderInfo() {
+    app.innerHTML = `
+      <div class="narrow">
+        <h1 class="title">모바일 인앱 광고 경험 조사</h1>
+        <div class="intro">
+          <p>안녕하세요.<br>저희는 홍익대학교 시각디자인과 대학원에 재학 중인 4인 팀으로, 모바일 앱 내 광고 관련 기능과 광고 재노출에 대한 사용자 인식을 알아보기 위한 연구를 진행하고 있습니다.</p>
+          <dl class="facts">
+            <div><dt>설문 내용</dt><dd>모바일 앱에서 광고 관련 기능을 선택하고, 이후 제시되는 네 가지 화면을 살펴본 뒤 각 상황에 대한 생각과 느낌에 응답</dd></div>
+            <div><dt>설문 대상</dt><dd>모바일 앱 이용 경험이 있는 사용자</dd></div>
+            <div><dt>소요 시간</dt><dd>약 10분 이내</dd></div>
+            <div><dt>설문 목적</dt><dd>모바일 앱에서 광고 관련 기능을 이용하는 과정에서 나타나는 사용자의 인식과 경험을 파악하기 위한 연구</dd></div>
+          </dl>
+          <p>제시된 상황과 화면을 살펴본 뒤, 각 질문에 대해 자신의 생각과 가장 가까운 응답을 선택해 주세요. 정해진 정답은 없으며, 평소 생각과 느낀 점을 바탕으로 응답해 주시면 됩니다.</p>
+          <p>본 설문에서는 성별, 연령대 및 설문 응답을 수집합니다. 수집된 정보는 학술 연구와 통계 분석 목적으로만 사용되며, 연구 결과를 보고할 때 개인을 식별할 수 있는 정보는 공개하지 않습니다.</p>
+          <p>설문 참여는 자발적으로 이루어지며, 참여를 원하지 않는 경우 언제든지 중단할 수 있습니다.</p>
+          <p>바쁜 시간 내어 참여해 주셔서 진심으로 감사드립니다.</p>
+        </div>
+        <form class="panel stack" id="infoForm" novalidate style="margin-top:22px">
+          <div class="field">
+            <span class="flabel" id="g-label">성별</span>
+            <div class="seg seg-2" role="radiogroup" aria-labelledby="g-label">
+              ${["여성", "남성"].map(g => `<button type="button" class="choice" role="radio" data-g="${g}" aria-checked="${S.info.gender === g}">${g}</button>`).join("")}
+            </div>
+          </div>
+          <div class="field">
+            <span class="flabel" id="a-label">연령대</span>
+            <div class="seg seg-5" role="radiogroup" aria-labelledby="a-label">
+              ${["10대", "20대", "30대", "40대", "50대 이상"].map(a => `<button type="button" class="choice" role="radio" data-a="${a}" aria-checked="${S.info.age === a}">${a}</button>`).join("")}
+            </div>
+          </div>
+          <p class="err" id="infoErr" hidden></p>
+          <div class="btn-row" style="margin-top:4px"><button class="btn" type="submit" id="infoNext">시작하기</button></div>
+        </form>
+      </div>`;
+    app.querySelectorAll("[data-g]").forEach(b => b.onclick = () => {
+      S.info.gender = b.dataset.g;
+      app.querySelectorAll("[data-g]").forEach(x => x.setAttribute("aria-checked", x === b));
+    });
+    app.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+      S.info.age = b.dataset.a;
+      app.querySelectorAll("[data-a]").forEach(x => x.setAttribute("aria-checked", x === b));
+    });
+    document.getElementById("infoForm").onsubmit = e => {
+      e.preventDefault();
+      const err = document.getElementById("infoErr");
+      let msg = "";
+      if (!S.info.gender) msg = "성별을 선택해 주세요.";
+      else if (!S.info.age) msg = "연령대를 선택해 주세요.";
+      if (msg) { err.textContent = msg; err.hidden = false; return; }
+      go(step + 1);
+    };
+  }
+
+  function renderScenario() {
+    if (S.closed) timeKey = "expect";
+    app.innerHTML = `
+      <div class="narrow stack">
+        <div>
+          <p class="eyebrow">상황 안내</p>
+          <h2 class="title">상황을 읽고 광고를 닫아 주세요.</h2>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">상황</p>
+          <p>모바일 앱을 이용하던 중 화면에 광고 팝업이 나타났습니다.</p>
+          <p>해당 팝업에는 <b>‘7일간 보지 않기’</b> 버튼이 있습니다.</p>
+          <p>귀하는 해당 버튼을 선택했습니다.</p>
+        </div>
+        <p class="instruction">아래 화면에서 팝업 하단의 <b>‘7일간 보지 않기’</b>를 선택한 뒤, <b>‘닫기’</b>를 눌러 팝업을 닫아 주세요.</p>
+        <div>
+          <div class="phone scenario-phone" id="phone">
+            <img id="phoneImg" src="${S.closed ? IMG.home : IMG.base}" alt="${S.closed ? "팝업이 닫힌 Shoppe 앱 홈 화면" : "Shoppe 앱 홈 화면 위에 신규회원 쿠폰 광고 팝업이 떠 있는 화면"}" width="402" height="944">
+            ${S.closed ? "" : `
+              <button class="hotspot" id="hotspot" type="button" role="checkbox" aria-checked="${S.tapped}" aria-label="7일간 보지 않기"></button>
+              <div class="check-mark" id="checkMark" ${S.tapped ? "" : "hidden"}><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <button class="hotspot close-spot" id="closeSpot" type="button" aria-label="닫기"></button>`}
+          </div>
+          <p class="tap-hint" id="tapNote"></p>
+        </div>
+        <div id="expectSlot"></div>
+      </div>`;
+    const note = document.getElementById("tapNote");
+    const setNote = (text, cls) => { note.textContent = text; note.className = cls; };
+    const refreshNote = () => {
+      if (S.closed) setNote("‘7일간 보지 않기’를 선택하고 팝업을 닫았습니다. 아래 문항에 응답해 주세요.", "done-note");
+      else if (S.tapped) setNote("이제 팝업의 ‘닫기’를 눌러 주세요.", "tap-hint");
+      else setNote("팝업의 ‘7일간 보지 않기’를 눌러 주세요.", "tap-hint");
+    };
+    refreshNote();
+    if (S.closed) showExpect(false);
+    const hs = document.getElementById("hotspot");
+    if (hs) hs.onclick = () => {
+      S.tapped = !S.tapped;
+      S.tappedAt = S.tapped ? new Date().toISOString() : null;
+      hs.setAttribute("aria-checked", S.tapped);
+      document.getElementById("checkMark").hidden = !S.tapped;
+      refreshNote();
+    };
+    const cs = document.getElementById("closeSpot");
+    if (cs) cs.onclick = () => {
+      if (!S.tapped) { setNote("먼저 ‘7일간 보지 않기’를 선택해 주세요.", "err tap-hint"); return; }
+      S.closed = true; S.closedAt = new Date().toISOString();
+      addTime("scenario"); timeKey = "expect";
+      hs.remove(); cs.remove(); document.getElementById("checkMark").remove();
+      const img = document.getElementById("phoneImg");
+      img.src = IMG.home; img.alt = "팝업이 닫힌 Shoppe 앱 홈 화면";
+      refreshNote();
+      showExpect(true);
+    };
+  }
+
+  // 팝업을 닫으면 같은 화면 아래에 사전 기대 문항이 나타남
+  function showExpect(scroll) {
+    const slot = document.getElementById("expectSlot");
+    slot.innerHTML = `
+      <section class="expect-block stack" id="expectBlock" aria-labelledby="expectQ">
+        <div>
+          <p class="eyebrow">사전 기대</p>
+          <p class="question" id="expectQ" style="margin-top:6px">‘7일간 보지 않기’를 선택할 때, 어떤 광고가 어떤 형태까지 보이지 않기를 기대하셨습니까?</p>
+          <p class="muted" style="margin-top:4px">기대한 범위에 가장 가까운 하나를 선택해 주세요.</p>
+        </div>
+        <div class="opts" role="radiogroup" aria-labelledby="expectQ">
+          ${P_OPTS.map(([v, t]) => `<button type="button" class="opt" role="radio" data-p="${v}" aria-checked="${S.P === v}"><span class="dot"></span><span>${t}</span></button>`).join("")}
+        </div>
+        <p class="err" id="pErr" hidden>하나를 선택해 주세요.</p>
+        <div class="btn-row" style="margin-top:6px"><button class="btn" type="button" id="pNext">다음</button></div>
+      </section>`;
+    app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+      S.P = b.dataset.p;
+      app.querySelectorAll("[data-p]").forEach(x => x.setAttribute("aria-checked", x === b));
+      document.getElementById("pErr").hidden = true;
+    });
+    document.getElementById("pNext").onclick = () => { if (!S.P) { document.getElementById("pErr").hidden = false; return; } go(step + 1); };
+    if (scroll) {
+      const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setTimeout(() => document.getElementById("expectBlock").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }), 450);
+    }
+  }
+
+  // 각 조건 화면에 들어가기 전 안내. 첫 번째 조건과 이후 조건의 문구가 다름
+  function renderIntro(c) {
+    const first = ORDER.indexOf(c) === 0;
+    timeKey = "intro";
+    document.getElementById("stepLabel").textContent = "안내";
+    app.innerHTML = `
+      <div class="intro-stage">
+        <div class="bg" aria-hidden="true"><img src="${IMG.home}" alt=""></div>
+        <div class="intro-copy">
+          ${first ? `
+          <h2 class="intro-head">잠시 후 같은 앱에<br>다시 접속한 상황입니다.</h2>
+          <div class="intro-body">
+            <p>이때 아래와 같은 광고 화면이 나타났습니다.</p>
+            <p>화면을 확인한 뒤 각 문항에 응답해 주세요.</p>
+          </div>` : `
+          <h2 class="intro-head">앞서 본 상황과는<br>별개의 상황입니다.</h2>
+          <div class="intro-body">
+            <p>처음 ‘7일간 보지 않기’를 선택한 뒤,<br><b>잠시 후 같은 앱에 다시 접속했다고 가정</b>해 주세요.</p>
+            <p>이때 아래와 같은 광고 화면이 나타났습니다.</p>
+            <p>화면을 확인한 뒤 각 문항에 응답해 주세요.</p>
+          </div>`}
+          <div class="btn-row">
+            <button class="btn ghost" type="button" id="iBack">이전</button>
+            <button class="btn" type="button" id="iNext">다음</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById("iBack").onclick = () => go(step - 1);
+    document.getElementById("iNext").onclick = () => {
+      addTime("intro"); timeKey = null;
+      S.introSeen[c] = true;
+      render();
+      window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    };
+  }
+
+  function renderCond(c) {
+    if (!S.introSeen[c]) return renderIntro(c);
+    const ans = S.answers[c];
+    app.innerHTML = `
+      <div class="cond-head">
+        <p class="eyebrow">상황 ${c}</p>
+        <h2 class="title">‘7일간 보지 않기’를 선택한 뒤 아래와 같은 광고가 나타났습니다.</h2>
+        <p class="lead">화면을 확인하면서 각 문항에 응답해 주세요.</p>
+      </div>
+      <div class="two-col">
+        <div class="sticky">
+          <div class="phone"><img src="${IMG[c]}" alt="상황 ${c} 화면" width="402" height="944"></div>
+          <button class="zoom-btn" type="button" id="zoomBtn">화면 크게 보기</button>
+        </div>
+        <div class="stack" style="align-content:start">
+          <div class="scale-key"><span>1 = 전혀 그렇지 않다</span><span>7 = 매우 그렇다</span></div>
+          <div class="groups">
+            ${GROUPS.map(([g, main], gi) => `
+            <section class="group" aria-labelledby="g-${c}-${g}">
+              <div class="group-head">
+                <span class="group-no">질문 ${gi + 1}</span>
+                <h3 class="group-q" id="g-${c}-${g}">${main}</h3>
+              </div>
+              <div class="items">
+            ${ITEMS.map(([k, t], i) => [k, t, i]).filter(([k]) => groupOf(k) === g).map(([k, t, i]) => `
+              <div class="item" id="item-${k}">
+                <p class="q" id="q-${c}-${k}"><b>Q${i + 1}</b>${t}</p>
+                <div class="likert" role="radiogroup" aria-labelledby="q-${c}-${k}">
+                  ${[1,2,3,4,5,6,7].map(v => `<button type="button" role="radio" id="r-${c}-${k}-${v}" data-k="${k}" data-v="${v}" aria-checked="${ans[k] === v}" aria-label="${v}점">${v}</button>`).join("")}
+                </div>
+                <div class="ends"><span>전혀 그렇지 않다</span><span>매우 그렇다</span></div>
+              </div>`).join("")}
+              </div>
+            </section>`).join("")}
+          </div>
+          <p class="err" id="cErr" hidden></p>
+          <div class="btn-row">
+            <button class="btn ghost" type="button" id="cBack">이전</button>
+            <button class="btn" type="button" id="cNext">다음</button>
+          </div>
+        </div>
+      </div>`;
+    addFab();
+    document.getElementById("zoomBtn").onclick = () => openLB(IMG[c], "상황 " + c + " 화면");
+
+    app.querySelectorAll(".likert button").forEach(b => b.onclick = () => {
+      const k = b.dataset.k, v = Number(b.dataset.v);
+      ans[k] = v;
+      b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-checked", x === b));
+      document.getElementById("item-" + k).classList.remove("missing");
+    });
+    document.getElementById("cBack").onclick = () => go(step - 1);
+    document.getElementById("cNext").onclick = () => {
+      const missing = ITEMS.filter(([k]) => !ans[k]).map(([k]) => k);
+      const err = document.getElementById("cErr");
+      if (missing.length) {
+        missing.forEach(k => document.getElementById("item-" + k).classList.add("missing"));
+        err.textContent = `응답하지 않은 문항이 ${missing.length}개 있습니다.`; err.hidden = false;
+        document.getElementById("item-" + missing[0]).scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      go(step + 1);
+    };
+  }
+
+  // ‘처음 화면 보기’ 버튼: 처음 본 광고 팝업(기본 이미지)을 크게 보여 줌.
+  // 아래쪽 ‘다음/제출하기’ 버튼 줄이 화면에 들어오면 가리지 않도록 숨김
+  let fabObs = null;
+  function addFab() {
+    document.querySelector(".fab")?.remove();
+    if (fabObs) { fabObs.disconnect(); fabObs = null; }
+    const fab = document.createElement("button");
+    fab.className = "fab"; fab.type = "button"; fab.textContent = "처음 화면 보기";
+    fab.onclick = () => openLB(IMG.base, "처음 본 광고 팝업 화면");
+    document.body.appendChild(fab);
+    const row = app.querySelector(".btn-row");
+    if (row && "IntersectionObserver" in window) {
+      fabObs = new IntersectionObserver(([e]) => fab.classList.toggle("fab-hide", e.isIntersecting));
+      fabObs.observe(row);
+    }
+  }
+
+  // 마지막 화면: 네 상황을 집단 제시 순서대로 보여 주고, 당시 기대와 가까운 순서대로 눌러 1~4 번호를 매김
+  function renderRank() {
+    const rank = S.rank;
+    app.innerHTML = `
+      <div class="cond-head">
+        <p class="eyebrow">마지막 질문</p>
+        <h2 class="title">처음 ‘7일간 보지 않기’를 선택했을 때, 어떤 광고가 보이지 않기를 바랐는지 떠올려 주세요.</h2>
+        <p class="lead">아래 네 가지 상황을 당시 기대와 가장 가까운 상황부터 가장 다른 상황까지 순서대로 선택해 주세요.</p>
+        <p class="rank-scale">1. 가장 가까운 상황 ~ 4. 가장 다른 상황</p>
+      </div>
+      <div class="rank-slots" aria-label="선택한 순서">
+        ${ORDER.map((_, i) => {
+          const c = rank[i];
+          return (i ? `<span class="slot-arrow" aria-hidden="true">→</span>` : "") +
+            (c ? `<button type="button" class="slot filled" data-s="${c}" aria-label="${i + 1}번째 ${c}, 눌러서 취소">${c}</button>`
+               : `<span class="slot" aria-label="${i + 1}번째 비어 있음">${i + 1}</span>`);
+        }).join("")}
+      </div>
+      <p class="muted rank-help">화면을 누르면 위 칸이 순서대로 채워집니다. 다시 누르면 취소됩니다.</p>
+      <div class="stack">
+        <div class="rank-grid">
+          ${ORDER.map(c => {
+            const n = rank.indexOf(c) + 1;
+            return `
+            <div class="rank-item">
+              <button type="button" class="rank-card" data-c="${c}" aria-pressed="${n > 0}" aria-label="상황 ${c}${n ? ", " + n + "번째" : ""}">
+                <div class="phone"><img src="${IMG[c]}" alt="" width="402" height="944"></div>
+                ${n ? `<span class="rank-badge" aria-hidden="true">${n}</span>` : ""}
+              </button>
+              <p class="rank-name">${c}</p>
+              <button type="button" class="rank-zoom" data-z="${c}">크게 보기</button>
+            </div>`;
+          }).join("")}
+        </div>
+        <p class="err" id="rErr" hidden>네 화면 모두 순서를 정해 주세요.</p>
+        <div class="btn-row">
+          <button class="btn ghost" type="button" id="rBack">이전</button>
+          ${rank.length ? `<button class="btn ghost" type="button" id="rReset">다시 고르기</button>` : ""}
+          <button class="btn" type="button" id="rNext" ${rank.length === ORDER.length ? "" : "disabled"}>제출하기</button>
+        </div>
+      </div>`;
+    const toggle = c => {
+      const i = rank.indexOf(c);
+      if (i >= 0) rank.splice(i, 1); else rank.push(c);
+      renderRank();
+      app.querySelector(`[data-c="${c}"]`).focus({ preventScroll: true });
+    };
+    app.querySelectorAll("[data-c]").forEach(b => b.onclick = () => toggle(b.dataset.c));
+    app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => toggle(b.dataset.s));
+    addFab();
+    app.querySelectorAll("[data-z]").forEach(b => b.onclick = () => openLB(IMG[b.dataset.z], "상황 " + b.dataset.z + " 화면"));
+    document.getElementById("rBack").onclick = () => go(step - 1);
+    const rs = document.getElementById("rReset");
+    if (rs) rs.onclick = () => { rank.length = 0; renderRank(); };
+    document.getElementById("rNext").onclick = () => {
+      if (rank.length !== ORDER.length) { document.getElementById("rErr").hidden = false; return; }
+      submit();
+    };
+  }
+
+  let saveResult = null;
+
+  // 구글 시트(Apps Script)로 한 명당 한 줄 전송. 응답을 확인하고, 실패하면 최대 3번까지 다시 시도
+  async function sendToSheet(record) {
+    const body = JSON.stringify(flatten(record));
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(SUBMIT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body });
+        const out = await res.json().catch(() => null);
+        if (out && out.ok) return true;
+      } catch (e) {}
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+    }
+    return false;
+  }
+  async function submit() {
+    addTime(STEPS[step]);
+    S.submittedAt = new Date().toISOString();
+    S.order = ORDER.join("");
+    S.group = GROUP;
+    const record = JSON.parse(JSON.stringify(S));
+    saveResult = { local: localAdd(record), remote: "pending" };
+    step = STEPS.length - 1; stepStart = Date.now();
+    render();
+    if (SUBMIT_URL) {
+      saveResult.remote = (await sendToSheet(record)) ? "ok" : "fail";
+      saveResult.record = record;
+      return renderDone();
+    }
+    const db = await getDb();
+    if (!db) { saveResult.remote = "none"; return renderDone(); }
+    try {
+      // 각 참가자 계정은 responses/<본인 id> 문서에만 쓸 수 있고, 연구자(편집자)만 전체를 읽음
+      const user = await window.claude.use("user").catch(() => null);
+      const uid = user ? await user.id() : null;
+      if (!uid) throw { code: "no_user" };
+      const ref = db.doc("responses/" + uid);
+      const cur = await ref.get();
+      const items = Object.assign({}, (cur.exists && cur.data() && cur.data().items) || {});
+      items[record.id] = record;
+      await ref.set({ items, updatedAt: record.submittedAt });
+      saveResult.remote = "ok";
+    } catch (e) {
+      saveResult.remote = "fail"; saveResult.err = (e && e.code) || "error";
+    }
+    renderDone();
+  }
+
+  function renderDone() {
+    setProgress();
+    document.querySelector(".fab")?.remove();
+    const r = saveResult || {};
+    if (r.remote === "pending") {
+      app.innerHTML = `<div class="narrow stack"><div><h1 class="title">응답을 제출하는 중입니다…</h1><p class="lead">잠시만 기다려 주세요. 창을 닫지 마세요.</p></div></div>`;
+      return;
+    }
+    const failed = r.remote === "fail" || r.remote === "none";
+    app.innerHTML = failed ? `
+      <div class="narrow stack">
+        <div>
+          <h1 class="title">응답이 아직 저장되지 않았습니다.</h1>
+          <p class="lead">인터넷 연결을 확인한 뒤 아래 버튼을 눌러 다시 제출해 주세요. 응답한 내용은 그대로 남아 있습니다.</p>
+        </div>
+        ${SUBMIT_URL ? `<div class="btn-row" style="justify-content:flex-start;margin-top:0"><button class="btn" type="button" id="resend">다시 제출하기</button></div>` : ""}
+        <p class="muted">계속 저장되지 않으면 이 화면을 캡처해 연구자에게 보내 주세요. (응답 번호 ${esc(S.id)})</p>
+      </div>` : `
+      <div class="narrow stack">
+        <div>
+          <h1 class="title">응답해 주셔서 감사합니다.</h1>
+          <p class="lead">모든 문항에 대한 응답이 제출되었습니다.</p>
+        </div>
+      </div>`;
+    const rs = document.getElementById("resend");
+    if (rs) rs.onclick = async () => {
+      rs.disabled = true; rs.textContent = "제출하는 중…";
+      saveResult.remote = (await sendToSheet(saveResult.record)) ? "ok" : "fail";
+      renderDone();
+    };
+  }
+
+  function copyText(text, btn, fallbackEl) {
+    const done = () => { btn.textContent = "복사됨"; setTimeout(() => btn.textContent = "데이터 복사", 1500); };
+    try {
+      navigator.clipboard.writeText(text).then(done, () => selectEl(fallbackEl));
+    } catch { selectEl(fallbackEl); }
+  }
+  function selectEl(el) { if (!el) return; const rng = document.createRange(); rng.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(rng); }
+
+  // ---------- 확대 보기 ----------
+  const lb = document.getElementById("lightbox");
+  function openLB(src, alt) { document.getElementById("lbImg").src = src; document.getElementById("lbImg").alt = alt; lb.hidden = false; document.getElementById("lbClose").focus(); }
+  function closeLB() { lb.hidden = true; }
+  document.getElementById("lbClose").onclick = closeLB;
+  lb.onclick = e => { if (e.target === lb) closeLB(); };
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !lb.hidden) closeLB(); });
+
+  // ---------- 연구자용 결과 화면 (#results) ----------
+  async function renderResults() {
+    document.getElementById("stepLabel").textContent = "연구자 · 응답 결과";
+    document.getElementById("stepNo").textContent = "";
+    document.getElementById("bar").style.width = "100%";
+    app.innerHTML = `<div class="stack"><div><p class="eyebrow">연구자 전용</p><h1 class="title">응답 결과</h1></div><p class="muted" id="resStatus">불러오는 중…</p><div id="resBody"></div></div>`;
+    const status = document.getElementById("resStatus");
+    let rows = [], src = [];
+    const db = await getDb();
+    if (db) {
+      try {
+        const snap = await db.collection("responses").get();
+        const docs = snap.docs || [];
+        rows = docs.flatMap(d => { const v = d.data(); return v && v.items ? Object.values(v.items) : []; });
+        src.push("데이터베이스 " + rows.length + "건");
+      } catch (e) { src.push("데이터베이스를 읽을 수 없음 (" + ((e && e.code) || "error") + ")"); }
+    } else src.push("데이터베이스 사용 불가");
+    const ids = new Set(rows.map(r => r.id));
+    const loc = localAll().filter(r => !ids.has(r.id));
+    rows = rows.concat(loc);
+    src.push("이 기기에만 저장된 응답 " + loc.length + "건");
+    rows.sort((a, b) => String(a.submittedAt).localeCompare(String(b.submittedAt)));
+    status.textContent = `총 ${rows.length}건 · ` + src.join(" · ");
+    if (!rows.length) { document.getElementById("resBody").innerHTML = `<div class="panel muted">아직 제출된 응답이 없습니다. 참가자가 마지막 화면에서 제출하면 여기에 나타납니다.</div>`; return; }
+    const flat = rows.map(flatten);
+    const cols = Object.keys(flat[0]);
+    const csv = toCSV(rows);
+    document.getElementById("resBody").innerHTML = `
+      <div class="btn-row" style="justify-content:flex-start;margin:0 0 12px"><button class="btn" type="button" id="dlCsv">CSV 저장</button><button class="btn ghost" type="button" id="cpCsv">CSV 복사</button></div>
+      <div class="table-wrap"><table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+      <tbody>${flat.map(f => `<tr>${cols.map(c => `<td>${esc(f[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      <pre class="code" id="csvText" hidden></pre>`;
+    const fname = "ad_reexposure_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.getElementById("dlCsv").onclick = async () => {
+      const dl = window.claude && window.claude.use ? await window.claude.use("downloads").catch(() => null) : null;
+      if (dl) { try { await dl.save({ filename: fname, data: new Blob([csv], { type: "text/csv" }) }); } catch {} return; }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = fname; a.click();
+    };
+    const cpb = document.getElementById("cpCsv");
+    cpb.onclick = () => { const pre = document.getElementById("csvText"); pre.textContent = csv; pre.hidden = false; copyText(csv, cpb, pre); };
+  }
+
+  function route() { if (location.hash === "#results") renderResults(); else render(); }
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
