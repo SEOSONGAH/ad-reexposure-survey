@@ -728,14 +728,14 @@ th { background: var(--bg); position: sticky; top: 0; }
     }
   }
 
-  // 마지막 화면: 네 상황을 집단 제시 순서대로 보여 주고, 기대와 가장 다른 상황부터 눌러 1~4 번호를 매김
+  // 순서 정하기: 네 상황을 집단 제시 순서대로 보여 주고, 처음 기대한 차단 범위 기준으로 가장 나타나면 안 되는 상황부터 1~4 번호를 매김
   function renderRank() {
     const rank = S.rank;
     app.innerHTML = `
       <div class="cond-head">
         <p class="eyebrow">순서 정하기</p>
-        <h2 class="title">처음 ‘7일간 보지 않기’를 선택한 이후, 광고가 나타났을 때 가장 거부감이 강했던 순서대로 골라 주세요.</h2>
-        <p class="lead">‘7일간 보지 않기’를 누를 때 어떤 광고가 안 보이길 바랐는지 떠올려 보세요.<br>아래 네 가지 상황 중, 그 기대와 가장 다른 상황을 1번에, 가장 가까운 상황을 4번에 놓아 주세요.</p>
+        <h2 class="title">처음 ‘7일간 보지 않기’를 선택한 후, 7일이 지나기 전에 나타나서는 안 된다고 생각하는 광고 상황을 순서대로 배열해 주세요.</h2>
+        <p class="lead">아래 네 가지 상황을 비교하여, 처음 기대했던 차단 범위를 기준으로 가장 나타나면 안 된다고 생각하는 상황부터 순서대로 배열해 주세요.</p>
         <p class="rank-scale">1. 기대와 가장 다름 → 4. 기대와 가장 가까움</p>
       </div>
       <div class="rank-slots" aria-label="선택한 순서">
@@ -873,7 +873,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     S.submittedAt = new Date().toISOString();
     S.order = ORDER.join("");
     S.group = GROUP;
-    S.ver = "v4"; // v3: rank 1 = 기대와 가장 다름, 광고 경험 문항 / v4: 확인 문항 2개로 변경, 마지막 추가 질문·연락처
+    S.ver = "v5"; // v3: rank 1 = 기대와 가장 다름, 광고 경험 문항 / v4: 확인 문항 2개로 변경, 마지막 추가 질문·연락처 / v5: 순서 문항 문구를 차단 범위 기준으로 변경
     const record = JSON.parse(JSON.stringify(S));
     saveResult = { local: localAdd(record), remote: "pending" };
     step = STEPS.length - 1; stepStart = Date.now();
