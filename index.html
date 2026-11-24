@@ -268,7 +268,7 @@ th { background: var(--bg); position: sticky; top: 0; }
     return GROUP_ORDERS[g] ? Number(g) : 1;
   })();
   const ORDER = GROUP_ORDERS[GROUP].split("");
-  const IMG = { base: "base.jpg", home: "home.jpg", A: "A.jpg?v=2", B: "B.jpg", C: "C.jpg", D: "D.jpg?v=2" };
+  const IMG = { base: "base.jpg?v=3", home: "home.jpg", A: "A.jpg?v=3", B: "B.jpg?v=3", C: "C.jpg?v=3", D: "D.jpg?v=3" };
   const COND = {
     A: "동일 광고 · 팝업", B: "동일 광고 · 고정 배너",
     C: "다른 광고 · 팝업", D: "다른 광고 · 고정 배너"
@@ -512,7 +512,7 @@ th { background: var(--bg); position: sticky; top: 0; }
         <p class="instruction">아래 화면에서 팝업 하단의 <b>‘7일간 보지 않기’</b>를 선택한 뒤, <b>‘닫기’</b>를 눌러 팝업을 닫아 주세요.</p>
         <div>
           <div class="phone scenario-phone" id="phone">
-            <img id="phoneImg" src="${S.closed ? IMG.home : IMG.base}" alt="${S.closed ? "팝업이 닫힌 Shoppe 앱 홈 화면" : "Shoppe 앱 홈 화면 위에 신규회원 쿠폰 광고 팝업이 떠 있는 화면"}" width="402" height="944">
+            <img id="phoneImg" src="${S.closed ? IMG.home : IMG.base}" alt="${S.closed ? "팝업이 닫힌 Shoppe 앱 홈 화면" : "Shoppe 앱 홈 화면 위에 실시간 인기 랭킹 광고 팝업이 떠 있는 화면"}" width="402" height="944">
             ${S.closed ? "" : `
               <button class="hotspot" id="hotspot" type="button" role="checkbox" aria-checked="${S.tapped}" aria-label="7일간 보지 않기"></button>
               <div class="check-mark" id="checkMark" ${S.tapped ? "" : "hidden"}><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -605,7 +605,7 @@ th { background: var(--bg); position: sticky; top: 0; }
       <div class="sep-card">
         <div class="sep-ref">
           <span class="tag">이전에 거부한 광고</span>
-          <div class="phone"><img src="${IMG.base}" alt="처음에 ‘7일간 보지 않기’를 선택했던 쿠폰 광고 팝업 화면" width="402" height="944"></div>
+          <div class="phone"><img src="${IMG.base}" alt="처음에 ‘7일간 보지 않기’를 선택했던 실시간 인기 랭킹 광고 팝업 화면" width="402" height="944"></div>
         </div>
         <div class="sep-div" aria-hidden="true"></div>
         <div class="sep-copy">
